@@ -1,0 +1,20 @@
+---
+- name: Verificar espaço em /var nos servidores
+  hosts: all
+  gather_facts: yes
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+  tasks:
+    - name: Obter informações sobre o espaço em /var
+      ansible.builtin.shell: df -h /var | awk 'NR==2{print $4}'
+      register: var_space
+
+    - name: Verificar se o espaço em /var é menor que 7GB
+      ansible.builtin.fail:
+        msg: "Espaço em /var insuficiente: {{ var_space.stdout }}."
+      when: var_space.stdout.split('G')[0] | int < 7
+
+    - name: Exibir espaço disponível em /var
+      ansible.builtin.debug:
+        msg: "Espaço disponível em /var: {{ var_space.stdout }}"
